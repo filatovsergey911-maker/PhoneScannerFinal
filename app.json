@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "PhoneScanner",
+    "slug": "phonescanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Приложению нужен доступ к камере для сканирования экранов телефонов",
+        "NSPhotoLibraryUsageDescription": "Приложению нужен доступ к фотографиям для анализа скриншотов"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Разрешите доступ к камере для сканирования экранов телефонов"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Приложение использует фотографии для анализа приложений"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}
