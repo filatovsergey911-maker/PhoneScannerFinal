@@ -231,43 +231,6 @@ const SettingsModal = ({
                   🤖 Использует анализ изображений
                 </Text>
               </View>
-              
-              {/* Советы по использованию */}
-              <View style={[
-                styles.tipsCard,
-                { backgroundColor: isDarkMode ? '#252525' : '#f8f8f8' }
-              ]}>
-                <Text style={[
-                  styles.tipsTitle,
-                  { color: isDarkMode ? '#4CAF50' : '#2E7D32' }
-                ]}>
-                  💡 Советы для лучших результатов:
-                </Text>
-                <Text style={[
-                  styles.tipText,
-                  { color: isDarkMode ? '#ccc' : '#666' }
-                ]}>
-                  1. Сохраняйте скриншоты как "screenshot_whatsapp.jpg"
-                </Text>
-                <Text style={[
-                  styles.tipText,
-                  { color: isDarkMode ? '#ccc' : '#666' }
-                ]}>
-                  2. Включите "Реальный анализ" для работы с изображениями
-                </Text>
-                <Text style={[
-                  styles.tipText,
-                  { color: isDarkMode ? '#ccc' : '#666' }
-                ]}>
-                  3. Используйте изображения с названиями приложений
-                </Text>
-                <Text style={[
-                  styles.tipText,
-                  { color: isDarkMode ? '#ccc' : '#666' }
-                ]}>
-                  4. Чем четче изображение, тем лучше результаты
-                </Text>
-              </View>
             </View>
           </ScrollView>
         </View>

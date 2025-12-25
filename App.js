@@ -1,4 +1,5 @@
 ﻿// App.js - ПОЛНАЯ ВЕРСИЯ С ОПТИМИЗАЦИЕЙ ИЗОБРАЖЕНИЙ
+// ИСПРАВЛЕННЫЕ ИМПОРТЫ:
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -24,14 +25,31 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import ImageManipulator from 'react-native-image-manipulator';
-import { APP_DATABASE } from './appData';
+import appDatabase from './appData.js';
 import { styles } from './styles';
 import ResultsModalFixed from './components/ResultsModal-fixed';
 import HistoryModal from './components/HistoryModal';
 import SettingsModal from './components/SettingsModal';
 import ScanAnimation from './ScanAnimation';
 
+// Для отладки
+console.log('appDatabase загружена?', !!appDatabase);
+console.log('Тип appDatabase:', typeof appDatabase);
+console.log('Это массив?', Array.isArray(appDatabase));
+console.log('Длина:', appDatabase?.length || 0);
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+// Отладка базы данных
+console.log('=== DEBUG appDatabase ===');
+console.log('Загружена:', !!appDatabase);
+console.log('Длина:', appDatabase?.length || 0);
+console.log('Тип:', typeof appDatabase);
+console.log('Первые 3 записи:');
+
+if (appDatabase && Array.isArray(appDatabase) && appDatabase.length > 0) {
+  appDatabase.slice(0, 3).forEach((app, i) => {
+    console.log(`${i+1}. ${app.name}: ${app.icon ? 'Есть иконка' : 'Нет иконки'}`);
+  });
+}
 
 // ============================================================================
 // ВСТРОЕННЫЙ OCRSpaceService
@@ -713,7 +731,7 @@ function MainApp() {
       
       console.log('✅ Текст распознан');
       
-      const foundApps = OCRSpaceService.findAppsInText(ocrResult.text, APP_DATABASE);
+      const foundApps = OCRSpaceService.findAppsInText(ocrResult.text, appDatabase);
       console.log('🔍 Найдено приложений:', foundApps.length);
       
       if (foundApps.length === 0) {
@@ -744,51 +762,73 @@ function MainApp() {
 
   // Генерация симуляционных данных
   const generateSimulatedApps = () => {
-    const appNames = [
-      'WhatsApp', 'YouTube', 'Instagram', 'Telegram', 'Facebook',
-      'TikTok', 'Spotify', 'Netflix', 'Chrome', 'Gmail',
-      'Google Maps', 'Discord'
-    ];
+  // Список популярных приложений
+  const popularApps = [
+    { name: 'WhatsApp', packageName: 'com.whatsapp' },
+    { name: 'YouTube', packageName: 'com.google.android.youtube' },
+    { name: 'Instagram', packageName: 'com.instagram.android' },
+    { name: 'Telegram', packageName: 'org.telegram.messenger' },
+    { name: 'Facebook', packageName: 'com.facebook.katana' },
+    { name: 'TikTok', packageName: 'com.zhiliaoapp.musically' },
+    { name: 'Spotify', packageName: 'com.spotify.music' },
+    { name: 'Netflix', packageName: 'com.netflix.mediaclient' },
+    { name: 'Chrome', packageName: 'com.android.chrome' },
+    { name: 'Gmail', packageName: 'com.google.android.gm' },
+    { name: 'Google Maps', packageName: 'com.google.android.apps.maps' },
+    { name: 'Discord', packageName: 'com.discord' },
+  ];
+  
+  // Выбираем случайные приложения
+  const shuffled = [...popularApps].sort(() => 0.5 - Math.random());
+  const count = 2 + Math.floor(Math.random() * 4);
+  const selected = shuffled.slice(0, count);
+  
+  return selected.map((app, index) => {
+    const confidence = 70 + Math.floor(Math.random() * 25);
     
-    const count = 2 + Math.floor(Math.random() * 4);
-    const shuffled = [...appNames].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, count);
+    // Получаем иконку из функции
+    const iconUrl = getAppIcon(app.name);
     
-    return selected.map((name, index) => {
-      const appData = APP_DATABASE.find(app => app.name === name);
-      const confidence = 70 + Math.floor(Math.random() * 25);
-      
-      return {
-        id: `${Date.now()}-sim-${index}`,
-        name: name,
-        packageName: appData?.packageName || `com.example.${name.toLowerCase()}`,
-        icon: getAppIcon(name),
-        storeUrl: appData?.storeUrl || `https://play.google.com/store/apps/details?id=com.${name.toLowerCase()}`,
-        confidence: confidence,
-        detectionMethod: 'simulation',
-        description: appData?.description || `Популярное приложение - ${name}`,
-      };
-    });
-  };
+    console.log(`📱 ${app.name}: ${iconUrl}`); // Для отладки
+    
+    return {
+      id: `${Date.now()}-sim-${index}`,
+      name: app.name,
+      packageName: app.packageName,
+      icon: iconUrl,
+      storeUrl: `https://play.google.com/store/apps/details?id=${app.packageName}`,
+      confidence: confidence,
+      detectionMethod: 'simulation',
+      description: `Популярное приложение - ${app.name}`,
+    };
+  });
+};
 
   const getAppIcon = (appName) => {
-    const iconMap = {
-      'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg',
-      'YouTube': 'https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg',
-      'Instagram': 'https://upload.wikimedia.org/wikipedia/commons/9/95/Instagram_logo_2022.svg',
-      'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg',
-      'Facebook': 'https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg',
-      'TikTok': 'https://upload.wikimedia.org/wikipedia/commons/a/a9/TikTok_logo.svg',
-      'Spotify': 'https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg',
-      'Netflix': 'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg',
-      'Chrome': 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Chrome_icon_%28September_2014%29.svg',
-      'Gmail': 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg',
-      'Google Maps': 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg',
-      'Discord': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Discord_logo.svg',
-    };
-    
-    return iconMap[appName] || 'https://cdn-icons-png.flaticon.com/512/888/888879.png';
+  const iconMap = {
+    'WhatsApp': 'https://img.icons8.com/color/96/whatsapp--v1.png',
+    'YouTube': 'https://img.icons8.com/color/96/youtube-play.png',
+    'Instagram': 'https://img.icons8.com/color/96/instagram-new.png',
+    'Telegram': 'https://img.icons8.com/color/96/telegram-app.png',
+    'Facebook': 'https://img.icons8.com/color/96/facebook-new.png',
+    'TikTok': 'https://img.icons8.com/color/96/tiktok--v1.png',
+    'Spotify': 'https://img.icons8.com/color/96/spotify--v1.png',
+    'Netflix': 'https://img.icons8.com/color/96/netflix-desktop-app.png',
+    'Chrome': 'https://img.icons8.com/color/96/chrome--v1.png',
+    'Gmail': 'https://img.icons8.com/color/96/gmail-new.png',
+    'Google Maps': 'https://img.icons8.com/color/96/google-maps-new.png',
+    'Discord': 'https://img.icons8.com/color/96/discord-logo.png',
+    'Twitter': 'https://img.icons8.com/color/96/twitter--v1.png',
+    'Viber': 'https://img.icons8.com/color/96/viber.png',
+    'Google Drive': 'https://img.icons8.com/color/96/google-drive--v1.png',
+    'Snapchat': 'https://img.icons8.com/color/96/snapchat--v1.png',
+    'Pinterest': 'https://img.icons8.com/color/96/pinterest--v1.png',
+    'Amazon': 'https://img.icons8.com/color/96/amazon.png',
+    'Microsoft Teams': 'https://img.icons8.com/color/96/microsoft-teams-2019.png',
   };
+  
+  return iconMap[appName] || 'https://cdn-icons-png.flaticon.com/512/888/888879.png';
+};
 
   const saveScanResult = async (apps, imageUri) => {
     if (apps.length === 0 || !autoSave) return;
@@ -958,35 +998,25 @@ function MainApp() {
           </View>
           
           <View style={localStyles.headerButtons}>
-            <TouchableOpacity 
-              style={[localStyles.headerButton, { backgroundColor: isDarkMode ? '#333' : '#e5e5e7' }]}
-              onPress={toggleRecognitionMode}
-            >
-              <Ionicons 
-                name={recognitionStatus.icon} 
-                size={22} 
-                color={recognitionStatus.color} 
-              />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[localStyles.headerButton, { backgroundColor: isDarkMode ? '#333' : '#e5e5e7' }]}
-              onPress={() => setHistoryVisible(true)}
-            >
-              <Ionicons name="time-outline" size={22} color={isDarkMode ? "#007AFF" : "#0056CC"} />
-              {scanHistory.length > 0 && (
-                <View style={localStyles.historyBadge}>
-                  <Text style={localStyles.historyBadgeText}>{scanHistory.length}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
+           {/* Кнопка переключения режима */}
+           <TouchableOpacity 
+             style={[localStyles.headerButton, { backgroundColor: isDarkMode ? '#333' : '#e5e5e7' }]}
+             onPress={toggleRecognitionMode}
+           >
+             <Ionicons 
+               name={recognitionStatus.icon} 
+               size={22} 
+               color={recognitionStatus.color} 
+             />
+           </TouchableOpacity>
+  
+           {/* Кнопка настроек */}
+           <TouchableOpacity 
               style={[localStyles.headerButton, { backgroundColor: isDarkMode ? '#333' : '#e5e5e7' }]}
               onPress={() => setSettingsVisible(true)}
-            >
-              <Ionicons name="settings-outline" size={22} color={isDarkMode ? "#007AFF" : "#0056CC"} />
-            </TouchableOpacity>
+           >
+             <Ionicons name="settings-outline" size={22} color={isDarkMode ? "#007AFF" : "#0056CC"} />
+           </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -1092,18 +1122,18 @@ function MainApp() {
               />
             </TouchableOpacity>
             
-            <View style={styles.scanButtonContainer}>
-              <TouchableOpacity
+           <View style={localStyles.scanButtonCenterContainer}>
+             <TouchableOpacity
                 style={[
                   styles.scanButton, 
                   { backgroundColor: isDarkMode ? '#007AFF' : '#0056CC' },
                   (isScanning || isProcessing) && { backgroundColor: isDarkMode ? '#ff3b30' : '#d70015' },
-                  isScanButtonDisabled && styles.disabledButton
-                ]}
-                onPress={startScanning}
+                 isScanButtonDisabled && styles.disabledButton
+               ]}
+               onPress={startScanning}
                 activeOpacity={0.7}
-                disabled={isScanButtonDisabled}
-              >
+               disabled={isScanButtonDisabled}
+             >
                 <View style={styles.scanButtonContent}>
                   {isProcessing ? (
                     <ActivityIndicator size="small" color="white" />
@@ -1111,40 +1141,45 @@ function MainApp() {
                     <Ionicons name="stop-circle" size={22} color="white" />
                   ) : (
                     <Ionicons name="scan" size={22} color="white" />
-                  )}
-                  <Text style={styles.scanButtonText}>
-                    {scanButtonText}
+                 )}
+                 <Text style={styles.scanButtonText}>
+                   {scanButtonText}
                   </Text>
                 </View>
-              </TouchableOpacity>
+             </TouchableOpacity>
             </View>
-            
             <TouchableOpacity 
               style={[styles.controlButton, { backgroundColor: isDarkMode ? '#333' : '#e5e5e7' }]}
               onPress={() => setHistoryVisible(true)}
-            >
-              <Ionicons name="time-outline" size={24} color={isDarkMode ? "#007AFF" : "#0056CC"} />
-            </TouchableOpacity>
+           >
+             <Ionicons name="time-outline" size={24} color={isDarkMode ? "#007AFF" : "#0056CC"} />
+             {scanHistory.length > 0 && (
+              <View style={[
+               styles.historyBadge, 
+                { 
+                 position: 'absolute',
+                 top: -5,
+                 right: -5,
+                 backgroundColor: '#FF3B30',
+                  borderRadius: 10,
+                 minWidth: 20,
+                 height: 20,
+                 alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: 4,
+               }
+              ]}>
+                <Text style={{
+                  color: 'white',
+                 fontSize: 10,
+                 fontWeight: 'bold',
+               }}>
+                 {scanHistory.length}
+               </Text>
+             </View>
+           )}
+           </TouchableOpacity>
           </View>
-
-          {/* Быстрая кнопка истории */}
-          {scanHistory.length > 0 && (
-            <View style={styles.historyButtonContainer}>
-              <TouchableOpacity 
-                style={[styles.historyButton, { backgroundColor: isDarkMode ? '#333' : '#e5e5e7' }]}
-                onPress={() => setHistoryVisible(true)}
-              >
-                <View style={styles.historyButtonContent}>
-                  <Ionicons name="time-outline" size={20} color={isDarkMode ? "#007AFF" : "#0056CC"} />
-                  <Text style={[styles.historyButtonText, { 
-                    color: isDarkMode ? "#007AFF" : "#0056CC" 
-                  }]}>
-                    История ({scanHistory.length})
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       </View>
 
@@ -1190,7 +1225,7 @@ function MainApp() {
       />
     </Animated.View>
   );
-}
+ }
 
 const localStyles = StyleSheet.create({
   headerContent: {

@@ -75,7 +75,7 @@ const ResultsModalFixed = ({
                 styles.modalSubtitle,
                 { color: isDarkMode ? '#aaa' : '#666' }
               ]}>
-                Найдено {safeApps.length} приложений • {useRealRecognition ? 'OCR' : 'Симуляция'}
+                Найдено приложений: {safeApps.length} • (Режим: {useRealRecognition ? 'OCR' : 'Симуляция'})
               </Text>
             </View>
             
@@ -91,6 +91,7 @@ const ResultsModalFixed = ({
           <ScrollView 
             style={styles.appsList}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollViewContent}
           >
             {safeApps.length === 0 ? (
               <View style={styles.emptyState}>
@@ -111,57 +112,70 @@ const ResultsModalFixed = ({
                     { 
                       backgroundColor: isDarkMode ? '#252525' : '#f8f8f8',
                       borderColor: isDarkMode ? '#333' : '#e0e0e0'
-                    }
+                    },
+                    // Добавляем отступ для самой верхней карточки
+                    index === 0 && styles.firstAppCard
                   ]}
                 >
                   {/* Иконка и основная информация */}
                   <View style={styles.appInfo}>
-                    <Image 
-                      source={{ uri: app.icon }} 
-                      style={styles.appIcon}
-                    />
+                    {/* Контейнер для иконки с fallback */}
+                    <View style={styles.iconContainer}>
+                      {app.icon ? (
+                        <Image 
+                          source={{ uri: app.icon }} 
+                          style={styles.appIcon}
+                          onError={() => console.log(`Не удалось загрузить иконку для: ${app.name}`)}
+                        />
+                      ) : (
+                        <View style={[
+                          styles.appIcon, 
+                          styles.fallbackIcon,
+                          { backgroundColor: isDarkMode ? '#333' : '#e0e0e0' }
+                        ]}>
+                          <Ionicons 
+                            name="apps" 
+                            size={28} 
+                            color={isDarkMode ? "#666" : "#999"} 
+                          />
+                        </View>
+                      )}
+                    </View>
                     
                     <View style={styles.appDetails}>
-                      <Text style={[
-                        styles.appName,
-                        { color: isDarkMode ? 'white' : '#1d1d1f' }
-                      ]}>
-                        {app.name}
-                      </Text>
+                      {/* Название приложения */}
+                      <View style={styles.appNameRow}>
+                        <Text style={[
+                          styles.appName,
+                          { color: isDarkMode ? 'white' : '#1d1d1f' }
+                        ]}>
+                          {app.name}
+                        </Text>
+
+                        <View style={styles.confidenceContainer}>
+                          <View style={[
+                            styles.confidenceBadge,
+                            { backgroundColor: getConfidenceColor(app.confidence) + '20' }
+                          ]}>
+                            <View style={[
+                              styles.confidenceDot,
+                              { backgroundColor: getConfidenceColor(app.confidence) }
+                            ]} />
+                            <Text style={[
+                              styles.confidenceText,
+                              { color: getConfidenceColor(app.confidence) }
+                            ]}>
+                              Точность {app.confidence}%
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
                       
                       <Text style={[
                         styles.appPackage,
                         { color: isDarkMode ? '#aaa' : '#666' }
                       ]}>
-                        {app.packageName || 'com.example.app'}
                       </Text>
-                      
-                      <View style={styles.confidenceRow}>
-                        <View style={[
-                          styles.confidenceBadge,
-                          { backgroundColor: getConfidenceColor(app.confidence) + '20' }
-                        ]}>
-                          <View style={[
-                            styles.confidenceDot,
-                            { backgroundColor: getConfidenceColor(app.confidence) }
-                          ]} />
-                          <Text style={[
-                            styles.confidenceText,
-                            { color: getConfidenceColor(app.confidence) }
-                          ]}>
-                            Точность: {app.confidence}%
-                          </Text>
-                        </View>
-                      </View>
-                      
-                      {app.description && (
-                        <Text style={[
-                          styles.appDescription,
-                          { color: isDarkMode ? '#ccc' : '#777' }
-                        ]}>
-                          {app.description}
-                        </Text>
-                      )}
                     </View>
                   </View>
 
@@ -200,26 +214,6 @@ const ResultsModalFixed = ({
                 Закрыть
               </Text>
             </TouchableOpacity>
-            
-            {safeApps.length > 0 && (
-              <TouchableOpacity 
-                style={[
-                  styles.actionButton,
-                  styles.primaryActionButton,
-                  { backgroundColor: isDarkMode ? '#007AFF' : '#0056CC' }
-                ]}
-                onPress={() => {
-                  if (safeApps.length > 0 && safeApps[0].storeUrl) {
-                    handleOpenStore(safeApps[0]);
-                  }
-                }}
-              >
-                <Ionicons name="open-outline" size={20} color="white" />
-                <Text style={styles.primaryActionButtonText}>
-                  Открыть все
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       </View>
@@ -261,7 +255,10 @@ const styles = StyleSheet.create({
   },
   appsList: {
     maxHeight: 400,
+  },
+  scrollViewContent: {
     paddingHorizontal: 20,
+    paddingTop: 5, // Небольшой отступ сверху для всех карточек
   },
   emptyState: {
     alignItems: 'center',
@@ -275,43 +272,57 @@ const styles = StyleSheet.create({
   },
   appCard: {
     flexDirection: 'column',
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 10,
     borderWidth: 1,
+  },
+  // Стиль для самой верхней карточки - добавляем отступ сверху
+  firstAppCard: {
+    marginTop: 10,
   },
   appInfo: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 10,
+  },
+  iconContainer: {
   },
   appIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-    marginRight: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    marginRight: 12,
     backgroundColor: '#f0f0f0',
+  },
+  fallbackIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   appDetails: {
     flex: 1,
+    marginLeft: 16,
+  },
+  // Новый контейнер для строки с названием и точностью
+  appNameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 6,
   },
   appName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     fontFamily: 'System',
-    marginBottom: 4,
+    flex: 1,
+    marginRight: 8, // Отступ между названием и блоком точности
   },
-  appPackage: {
-    fontSize: 13,
-    fontFamily: 'System',
-    marginBottom: 8,
-  },
-  confidenceRow: {
-    marginBottom: 8,
+  // Контейнер для блока точности
+  confidenceContainer: {
+    flexShrink: 0,
   },
   confidenceBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -326,11 +337,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     fontFamily: 'System',
-  },
-  appDescription: {
-    fontSize: 13,
-    fontFamily: 'System',
-    lineHeight: 18,
   },
   storeButton: {
     flexDirection: 'row',
@@ -363,18 +369,6 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    fontFamily: 'System',
-  },
-  primaryActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryActionButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
     fontFamily: 'System',
   },
 });
